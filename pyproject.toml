@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "printer-anomaly-detection"
+version = "0.1.0"
+description = ""
+authors = ["Yannick Habecker <yannick.habecker@openknowledge.de>"]
+readme = "README.md"
+packages = [{include = "printer_anomaly_detection", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pandas = ">=2.0.0"
+numpy = ">=1.24.2"
+matplotlib = ">=3.7.1"
+notebook = ">=6.5.4"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
