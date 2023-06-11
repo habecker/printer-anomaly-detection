@@ -4,16 +4,27 @@ version = "0.1.0"
 description = ""
 authors = ["Yannick Habecker <yannick.habecker@openknowledge.de>"]
 readme = "README.md"
-packages = [{include = "printer_anomaly_detection", from = "src"}]
+packages = [{include = "printer_anomaly_detection/dataset", from = "src"}]
 
 [tool.poetry.dependencies]
-python = "^3.11"
-pandas = ">=2.0.0"
-numpy = ">=1.24.2"
+python = ">=3.10, <3.11"
+pandas = "2.0.0"
+numpy = ">=1.23"
 matplotlib = ">=3.7.1"
-notebook = ">=6.5.4"
+notebook = "7.0.0b1"
+dataclass-csv = "1.4.0"
+tensorflow = { version = "2.12.0", markers = "platform_machine == 'x86_64' or platform_machine == 'amd64'" }
+tensorflow-aarch64 = { version = "2.12.0", markers = "platform_machine == 'aarch64'" }
+tensorflow-macos = { version = "2.12.0", markers = "platform_machine == 'arm64'" }
+StrEnum = ">=0.4.10"
+py2g-utils = ">=1.0.2"
 
+[tool.poetry.dev-dependencies]
+python-ffmpeg = ">= 2.0.4"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+prepare = 'printer_anomaly_detection.preprocessing.prepare_dataset:main'
