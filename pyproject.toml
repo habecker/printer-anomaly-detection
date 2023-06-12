@@ -28,3 +28,4 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 prepare = 'printer_anomaly_detection.preprocessing.prepare_dataset:main'
+merge = 'printer_anomaly_detection.preprocessing.merge:main'

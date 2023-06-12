@@ -1,13 +1,13 @@
 import argparse
 import dataclasses
-from datetime import datetime
 import glob
 import gzip
 import json
+import shutil
+from datetime import datetime
 from enum import Enum, auto
 from itertools import count
 from pathlib import Path
-import shutil
 from typing import List
 
 import pandas as pd

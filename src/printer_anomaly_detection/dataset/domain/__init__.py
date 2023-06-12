@@ -92,6 +92,11 @@ class Sensor(Enum):
         """Returns True if the sensor is updated frequently (e.g. every 100ms)."""
         return self in {Sensor.ACCELEROMETER, Sensor.MAGNETOMETER, Sensor.GYROSCOPE, Sensor.EXTRUDER_TEMPERATURE}
 
+    @property
+    def is_target(self) -> bool:
+        """Returns True if the sensor contains target data."""
+        return self in {Sensor.EXTRUDER_TARGET, Sensor.HEATER_TARGET, Sensor.POSITION_TARGET, Sensor.VELOCITY_TARGET}
+
 
 class SensorType(StrEnum):
     """Enum for the different types of sensors. The values are a short representation of the sensor type - used in the serial communication."""
