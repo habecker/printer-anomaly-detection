@@ -4,7 +4,8 @@ version = "0.1.0"
 description = ""
 authors = ["Yannick Habecker <yannick.habecker@openknowledge.de>"]
 readme = "README.md"
-packages = [{include = "printer_anomaly_detection/dataset", from = "src"}]
+packages = [{include = "printer_anomaly_detection/dataset", from = "src"},
+            {include = "printer_anomaly_detection/util", from = "src"}]
 
 [tool.poetry.dependencies]
 python = ">=3.10, <3.11"
@@ -18,9 +19,12 @@ tensorflow-aarch64 = { version = "2.12.0", markers = "platform_machine == 'aarch
 tensorflow-macos = { version = "2.12.0", markers = "platform_machine == 'arm64'" }
 StrEnum = ">=0.4.10"
 py2g-utils = ">=1.0.2"
+librosa = ">=0.10.0"
 
 [tool.poetry.dev-dependencies]
 python-ffmpeg = ">= 2.0.4"
+scikit-learn = ">=1.2.2" 
+ipywidgets = ">=8.0.6"
 
 [build-system]
 requires = ["poetry-core"]
@@ -29,3 +33,5 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.scripts]
 prepare = 'printer_anomaly_detection.preprocessing.prepare_dataset:main'
 merge = 'printer_anomaly_detection.preprocessing.merge:main'
+
+audio = 'printer_anomaly_detection.dataset.audio:main'

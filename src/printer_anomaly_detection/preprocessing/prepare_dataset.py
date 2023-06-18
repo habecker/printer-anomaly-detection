@@ -38,6 +38,11 @@ def main() -> None:
         required=True,
         help="Path for saving the resulting datasets"
     )
+    parser.add_argument(
+        '--skip_existing',
+        action='store_true',
+        help='Skip existing datasets'
+    )
 
     args = parser.parse_args()
 
@@ -59,10 +64,9 @@ def main() -> None:
         dataset_name = print_path.name
         dataset_path = datasets_path / dataset_name
 
-        if dataset_path.exists():
+        if dataset_path.exists() and args.skip_existing:
             continue
 
-        #print(str(dataset_name))
         serial_data_files = list(filter(lambda p: p.suffixes == ['.tsv', '.gz'], files))
         klipper_files = list(filter(lambda p: p.suffixes == ['.json', '.gz'], files))
         mp4_files = list(filter(lambda p: p.suffixes == ['.mp4'], files))

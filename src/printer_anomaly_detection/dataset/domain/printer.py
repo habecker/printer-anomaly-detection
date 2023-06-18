@@ -9,7 +9,6 @@ from printer_anomaly_detection.dataset.domain import Datetime
 
 # COPILOT: Remove load functions from all classes
 
-@dateformat('%Y-%m-%d %H:%M:%S.%f')
 @dataclass(kw_only=True)
 class TemperatureSensorData(SensorData):
     sensor_type: SensorType

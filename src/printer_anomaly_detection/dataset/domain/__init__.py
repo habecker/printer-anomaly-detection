@@ -62,6 +62,16 @@ class Datetime:
     def timestamp(self) -> float:
         return self.datetime.timestamp()
 
+    @classmethod
+    @property
+    def max(cls) -> 'Datetime':
+        return Datetime(datetime.max)
+
+    @classmethod
+    @property
+    def min(cls) -> 'Datetime':
+        return Datetime(datetime.min)
+
     def __str__(self) -> str:
         return self.datetime.isoformat()
 
