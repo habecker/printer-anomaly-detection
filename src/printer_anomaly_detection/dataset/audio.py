@@ -1,3 +1,5 @@
+import csv
+from enum import Enum
 from functools import cache
 import json
 from dataclasses import dataclass
@@ -5,7 +7,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Iterator, Set
 
-import dataclass_csv
+import tensorflow as tf
 import librosa
 import numpy as np
 
@@ -49,7 +51,7 @@ def _windowed_sft(audio: tf.Tensor, size: int, step_size: int) -> Iterator[tf.Te
 
     return split_with_reminder(sft, size)
 
-def get_audio_dataset_files(after: Datetime, before: Datetime, outcomes: Set[Outcome]) -> Iterator[Path]:
+def get_audio_dataset_files(datasets_path: Path, after: Datetime, before: Datetime, outcomes: Set[Outcome]) -> Iterator[Path]:
     for print_path in datasets_path.iterdir():
         if print_path.is_file():
             continue
@@ -70,17 +72,29 @@ def load_audio_file(path: Path) -> np.array:
     return audio
 
 
-def load_audio_dataset(after: Datetime, before: Datetime, window_size: int, step_size: int, outcomes: Set[Outcome] = {Outcome.SUCCESS}) -> tf.data.Dataset:
+def load_audio_dataset(print_dataset_path: Path, after: Datetime, before: Datetime, window_size: int, step_size: int, outcomes: Set[Outcome] = {Outcome.SUCCESS}) -> tf.data.Dataset:
     def generator():
-        for audio_path in get_audio_dataset_files(after, before, outcomes):
+        for audio_path in get_audio_dataset_files(print_dataset_path, after, before, outcomes):
             with tf.device('CPU:0'):
                 audio = load_audio_file(audio_path)
                 audio = tf.convert_to_tensor(audio, dtype=tf.float32)
 
             for w in _windowed_sft(audio, window_size, step_size):
                 yield w
-    return tf.data.Dataset.from_generator(generator, output_signature=(tf.TensorSpec(shape=(size, size), dtype=tf.float32)))
 
+    return tf.data.Dataset.from_generator(generator, output_signature=(tf.TensorSpec(shape=(window_size, window_size), dtype=tf.float32)))
+
+Split = Enum('Split', ['TRAIN', 'VALIDATION', 'TEST'])
+
+def load_audio_dataset_split(print_dataset_path: Path, name: str, split: Split, window_size: int, step_size: int, outcomes: Set[Outcome] = {Outcome.SUCCESS}) -> tf.data.Dataset:
+    with open(print_dataset_path / 'datasets.csv') as f:
+        for row in csv.DictReader(f):
+            print(row['split'] != split.name.lower())
+            if row['name'] != name or row['split'] != split.name.lower():
+                continue
+            after = Datetime(row['after'])
+            before = Datetime(row['before'])
+            return load_audio_dataset(print_dataset_path, after, before, window_size, step_size, outcomes)
 
 @dataclass
 class Upgrade:
