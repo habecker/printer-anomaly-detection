@@ -20,14 +20,15 @@ tensorflow-macos = { version = "2.12.0", markers = "platform_machine == 'arm64'"
 StrEnum = ">=0.4.10"
 py2g-utils = ">=1.0.2"
 librosa = ">=0.10.0"
+tensorflow-io-gcs-filesystem = "^0.32.0"
 
 [tool.poetry.dev-dependencies]
 python-ffmpeg = ">= 2.0.4"
 scikit-learn = ">=1.2.2" 
 ipywidgets = ">=8.0.6"
 #tensorflow-io = "=0.24.1"
-tensorflow-io-gcs-filesystem = { file = "tensorflow_io_gcs_filesystem-0.31.0-cp311-cp311-macosx_13_0_arm64.whl", markers = "platform_machine == 'arm64'"}
-tensorflow-io = { file = "tensorflow_io-0.31.0-cp311-cp311-macosx_13_0_arm64.whl", markers = "platform_machine == 'arm64'" }
+tensorflow-io-gcs-filesystem = ">=0.32.0"
+tensorflow-io = ">=0.32.0"
 
 [build-system]
 requires = ["poetry-core"]
