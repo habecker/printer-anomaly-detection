@@ -94,6 +94,7 @@ def load_audio_dataset_split(print_dataset_path: Path, name: str, split: Split, 
                 continue
             after = Datetime(row['after'])
             before = Datetime(row['before'])
+            print(row)
             return load_audio_dataset(print_dataset_path, after, before, window_size, step_size, outcomes)
 
 @dataclass

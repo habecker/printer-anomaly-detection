@@ -38,4 +38,4 @@ build-backend = "poetry.core.masonry.api"
 prepare = 'printer_anomaly_detection.preprocessing.prepare_dataset:main'
 merge = 'printer_anomaly_detection.preprocessing.merge:main'
 
-audio = 'printer_anomaly_detection.dataset.audio:main'
+train-audio = 'printer_anomaly_detection.training.audio:main'
