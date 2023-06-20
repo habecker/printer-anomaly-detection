@@ -5,7 +5,12 @@ import tensorflow as tf
 from printer_anomaly_detection.model.cae import CAE
 from printer_anomaly_detection.dataset.audio import load_audio_dataset_split, Split
 
+import warnings
+
 def main():
+    warnings.simplefilter(action='ignore', category=FutureWarning)
+    warnings.simplefilter(action='ignore', category=UserWarning)
+
     parser = argparse.ArgumentParser(
         description="Preprocessing Script"
     )
@@ -28,10 +33,10 @@ def main():
     phase = args.phase
     dataset_path = Path(args.dataset_folder)
 
-    train_dataset, test_dataset = load_audio_dataset_split(dataset_path, phase, Split.TRAIN, window_size=256, step_size=16384), \
-                                  load_audio_dataset_split(dataset_path, phase, Split.TEST, window_size=256, step_size=16384)
+    train_dataset, test_dataset = load_audio_dataset_split(dataset_path, phase, Split.TRAIN, window_size=256, step_size=32), \
+                                  load_audio_dataset_split(dataset_path, phase, Split.TEST, window_size=256, step_size=32)
 
-    assert len(list(train_dataset.take(1))) > 0, "No training data found"
+    #assert len(list(train_dataset.take(1))) > 0, "No training data found"
 
     #train_dataset = tf.data.Dataset.zip((train_dataset, train_dataset))
     #test_dataset = tf.data.Dataset.zip((test_dataset, test_dataset))
@@ -41,11 +46,17 @@ def main():
 
     def image_loss(y_true,y_pred):
         return tf.norm(y_true - y_pred)
-    tf.config.run_functions_eagerly(True)
-    tf.data.experimental.enable_debug_mode()
-    
-    model.compile(optimizer='adam', loss=['mae'], run_eagerly=True)
-    train_dataset = train_dataset.map(lambda x: (x, x)).batch(64)
-    test_dataset = test_dataset.map(lambda x: (x, x)).batch(64)
-    # todo: normalization, learning rate, callbacks
-    model.fit(train_dataset, epochs=10, validation_data=test_dataset)
+
+    model.compile(optimizer='adam', loss=['mae'], metrics=['mae', 'crossentropy'])
+
+    train_dataset = train_dataset.map(lambda x: (x, x)).batch(64).prefetch(tf.data.AUTOTUNE)
+    test_dataset = test_dataset.map(lambda x: (x, x)).batch(64).prefetch(tf.data.AUTOTUNE)
+
+    assert len(list(test_dataset.take(1))) > 0
+
+    # todo: learning rate 
+    model.fit(train_dataset, epochs=200, validation_data=test_dataset, validation_freq=1, callbacks=[
+        tf.keras.callbacks.TensorBoard(),
+        # after each epoch
+        tf.keras.callbacks.ModelCheckpoint(filepath='./checkpoints/', save_weights_only=True, save_freq='epoch')
+    ])

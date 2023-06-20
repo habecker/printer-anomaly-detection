@@ -43,14 +43,6 @@ def split_with_reminder(x, size):
   dense = tf.RaggedTensor.from_tensor(dense)
   return dense
 
-
-def _windowed_sft(audio: tf.Tensor, size: int, step_size: int) -> Iterator[tf.Tensor]:
-    n_fft = (size - 1) * 2
-
-    sft = tf.abs(tf.signal.stft(audio, frame_length=size, frame_step=step_size, fft_length=n_fft))
-
-    return split_with_reminder(sft, size)
-
 def get_audio_dataset_files(datasets_path: Path, after: Datetime, before: Datetime, outcomes: Set[Outcome]) -> Iterator[Path]:
     for print_path in datasets_path.iterdir():
         if print_path.is_file():
@@ -72,30 +64,37 @@ def load_audio_file(path: Path) -> np.array:
     return audio
 
 
-def load_audio_dataset(print_dataset_path: Path, after: Datetime, before: Datetime, window_size: int, step_size: int, outcomes: Set[Outcome] = {Outcome.SUCCESS}) -> tf.data.Dataset:
-    def generator():
-        for audio_path in get_audio_dataset_files(print_dataset_path, after, before, outcomes):
-            with tf.device('CPU:0'):
+def sft(audio: tf.Tensor, size: int) -> Iterator[tf.Tensor]:
+    n_fft = (size - 1) * 2
+    return tf.abs(tf.signal.stft(audio, frame_length=n_fft, frame_step=n_fft // 4))
+
+def load_audio_dataset(print_dataset_path: Path, after: Datetime, before: Datetime, window_size: int, step_size: int, loader_step_size: int = 120, sr: int = 22050, outcomes: Set[Outcome] = {Outcome.SUCCESS}) -> tf.data.Dataset:
+        def generator():
+            for audio_path in get_audio_dataset_files(print_dataset_path, after, before, outcomes):
                 audio = load_audio_file(audio_path)
-                audio = tf.convert_to_tensor(audio, dtype=tf.float32)
+                audio_len = audio.shape[0]
+                for i in range(0, audio_len, loader_step_size*sr):
+                    tf_audio = tf.convert_to_tensor(audio[i:i+loader_step_size*sr], dtype=tf.float32)
+                    result = sft(tf_audio, window_size)
+            
+                    for i in range(0, result.shape[0], step_size):
+                        if result.shape[0] >= i + window_size:
+                            _sft = result[i:i+window_size]
+                            _sft = _sft[:window_size,:window_size]
+                            yield tf.identity(_sft)
 
-            for w in _windowed_sft(audio, window_size, step_size):
-                yield w
-
-    return tf.data.Dataset.from_generator(generator, output_signature=(tf.TensorSpec(shape=(window_size, window_size), dtype=tf.float32)))
+        return tf.data.Dataset.from_generator(generator, output_signature=(tf.TensorSpec(shape=(window_size, window_size), dtype=tf.float32)))
 
 Split = Enum('Split', ['TRAIN', 'VALIDATION', 'TEST'])
 
 def load_audio_dataset_split(print_dataset_path: Path, name: str, split: Split, window_size: int, step_size: int, outcomes: Set[Outcome] = {Outcome.SUCCESS}) -> tf.data.Dataset:
     with open(print_dataset_path / 'datasets.csv') as f:
         for row in csv.DictReader(f):
-            print(row['split'] != split.name.lower())
             if row['name'] != name or row['split'] != split.name.lower():
                 continue
             after = Datetime(row['after'])
             before = Datetime(row['before'])
-            print(row)
-            return load_audio_dataset(print_dataset_path, after, before, window_size, step_size, outcomes)
+            return load_audio_dataset(print_dataset_path=print_dataset_path, after=after, before=before, window_size=window_size, step_size=step_size, outcomes = outcomes)
 
 @dataclass
 class Upgrade:
