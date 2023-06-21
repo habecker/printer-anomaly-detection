@@ -55,8 +55,8 @@ def main():
     assert len(list(test_dataset.take(1))) > 0
 
     # todo: learning rate 
-    model.fit(train_dataset, epochs=200, validation_data=test_dataset, validation_freq=1, callbacks=[
+    model.fit(train_dataset, epochs=20, validation_data=test_dataset, validation_freq=1, callbacks=[
         tf.keras.callbacks.TensorBoard(),
         # after each epoch
-        tf.keras.callbacks.ModelCheckpoint(filepath='./checkpoints/', save_weights_only=True, save_freq='epoch')
+        tf.keras.callbacks.ModelCheckpoint(filepath='checkpoints/model.{epoch:02d}-{val_loss:.4f}.h5', save_freq='epoch', verbose=1, monitor='val_loss', save_weights_only=True)
     ])
