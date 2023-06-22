@@ -148,7 +148,13 @@ def main():
     model = CAE(latent_dim=latent_dim, renorm=renorm, activation=activation, dropout=dropout, mean=mean, var=var)
     model.summary()
 
-    model.compile(optimizer=tf.optimizers.Adam(learning_rate=learning_rate), loss=[loss], metrics=['mae', 'crossentropy'])
+    lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
+        initial_learning_rate=learning_rate,
+        decay_steps=532000./(data_steps*batch_size),
+        decay_rate=0.9)
+    optimizer = tf.keras.optimizers.SGD(learning_rate=lr_schedule)
+    model.compile(optimizer=optimizer, loss=[loss], metrics=['mae', 'crossentropy'])
+    #model.compile(optimizer=tf.optimizers.Adam(learning_rate=learning_rate), loss=[loss], metrics=['mae', 'crossentropy'])
 
     train_dataset = train_dataset.map(lambda x: (x, x)).batch(batch_size).prefetch(tf.data.AUTOTUNE)
     test_dataset = test_dataset.map(lambda x: (x, x)).batch(batch_size).prefetch(tf.data.AUTOTUNE)

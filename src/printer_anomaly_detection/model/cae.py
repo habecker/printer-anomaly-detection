@@ -6,7 +6,7 @@ def CAE(latent_dim: int = 256, input_shape: Tuple[int, int, int] = (256, 256, 1)
     normalization = None
 
     if mean and var:
-        normalization = tf.keras.layers.Normalization(mean=mean, variance=var)
+        normalization = tf.keras.layers.Normalization(axis=None, mean=mean, variance=var)
 
     layers = [
              tf.keras.layers.InputLayer(input_shape=input_shape),
@@ -48,7 +48,7 @@ def CAE(latent_dim: int = 256, input_shape: Tuple[int, int, int] = (256, 256, 1)
          ]
 
     if normalization:
-        layers.append(tf.keras.layers.Normalization(axis=None, mean=mean, var=var, invert=True))
+        layers.append(tf.keras.layers.Normalization(axis=None, mean=mean, variance=var, invert=True))
 
     return tf.keras.Sequential(layers)
 
