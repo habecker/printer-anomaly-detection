@@ -5,7 +5,7 @@ import json
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Iterator, Set
+from typing import Iterator, Set, Tuple
 
 import tensorflow as tf
 import librosa
@@ -68,24 +68,38 @@ def sft(audio: tf.Tensor, size: int) -> Iterator[tf.Tensor]:
     n_fft = (size - 1) * 2
     return tf.abs(tf.signal.stft(audio, frame_length=n_fft, frame_step=n_fft // 4))
 
-def load_audio_dataset(print_dataset_path: Path, after: Datetime, before: Datetime, window_size: int, step_size: int, loader_step_size: int = 120, sr: int = 22050, outcomes: Set[Outcome] = {Outcome.SUCCESS}) -> tf.data.Dataset:
-        def generator():
-            for audio_path in get_audio_dataset_files(print_dataset_path, after, before, outcomes):
-                audio = load_audio_file(audio_path)
-                audio_len = audio.shape[0]
-                for i in range(0, audio_len, loader_step_size*sr):
-                    tf_audio = tf.convert_to_tensor(audio[i:i+loader_step_size*sr], dtype=tf.float32)
-                    result = sft(tf_audio, window_size)
-                    result = tf.math.log1p(result)
-                    result = result / tf.math.reduce_max(tf.abs(result))
-            
-                    for i in range(0, result.shape[0], step_size):
-                        if result.shape[0] >= i + window_size:
-                            _sft = result[i:i+window_size]
-                            _sft = _sft[:window_size,:window_size]
-                            yield tf.identity(_sft)
+def get_normalization_stats(print_dataset_path: Path, name: str) -> Tuple[float, float]:
+    mean: float = None
+    var: float = None
+    
+    with open(print_dataset_path / 'normalization.csv', 'r', encoding='utf-8') as f:
+        for row in csv.DictReader(f):
+            if row['name'] == name:
+                mean = float(row['mean'])
+                var = float(row['var'])
+                break
+    
+    assert mean and var, f'Dataset {name} does not have any normalization configuration'
+    return mean, var
 
-        return tf.data.Dataset.from_generator(generator, output_signature=(tf.TensorSpec(shape=(window_size, window_size), dtype=tf.float32)))
+
+def load_audio_dataset(print_dataset_path: Path, name: str, after: Datetime, before: Datetime, window_size: int, step_size: int, loader_step_size: int = 120, sr: int = 22050, outcomes: Set[Outcome] = {Outcome.SUCCESS}) -> tf.data.Dataset:
+    def generator():
+        for audio_path in get_audio_dataset_files(print_dataset_path, after, before, outcomes):
+            audio = load_audio_file(audio_path)
+            audio_len = audio.shape[0]
+            for i in range(0, audio_len, loader_step_size*sr):
+                tf_audio = tf.convert_to_tensor(audio[i:i+loader_step_size*sr], dtype=tf.float32)
+                result = sft(tf_audio, window_size)
+                #result = tf.math.log1p(result)
+                #result = result / tf.math.reduce_max(tf.abs(result))
+        
+                for i in range(0, result.shape[0], step_size):
+                    if result.shape[0] >= i + window_size:
+                        _sft = result[i:i+window_size]
+                        _sft = _sft[:window_size,:window_size]
+                        yield tf.identity(_sft)
+    return tf.data.Dataset.from_generator(generator, output_signature=(tf.TensorSpec(shape=(window_size, window_size), dtype=tf.float32)))
 
 Split = Enum('Split', ['TRAIN', 'VALIDATION', 'TEST'])
 
@@ -96,7 +110,7 @@ def load_audio_dataset_split(print_dataset_path: Path, name: str, split: Split, 
                 continue
             after = Datetime(row['after'])
             before = Datetime(row['before'])
-            return load_audio_dataset(print_dataset_path=print_dataset_path, after=after, before=before, window_size=window_size, step_size=step_size, outcomes = outcomes)
+            return load_audio_dataset(print_dataset_path=print_dataset_path, name=name, after=after, before=before, window_size=window_size, step_size=step_size, outcomes = outcomes)
 
 @dataclass
 class Upgrade:

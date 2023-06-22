@@ -6,7 +6,7 @@ import subprocess
 import tensorflow as tf
 import yaml
 from printer_anomaly_detection.model.cae import CAE
-from printer_anomaly_detection.dataset.audio import load_audio_dataset_split, Split
+from printer_anomaly_detection.dataset.audio import load_audio_dataset_split, Split, get_normalization_stats
 from datetime import datetime
 
 import warnings
@@ -78,9 +78,9 @@ def main():
         default=False
     )
     parser.add_argument(
-        "--last_activation",
+        "--activation",
         type=str,
-        default='sigmoid',
+        default='tanh',
     )
     parser.add_argument(
         "--batch_size",
@@ -114,13 +114,13 @@ def main():
     epochs = args.epochs
     loss = args.loss
     renorm = args.renorm
-    last_activation = args.last_activation
+    activation = args.activation
     batch_size = args.batch_size
     data_steps = args.data_steps
     dropout = args.dropout
     learning_rate = args.learning_rate
 
-    config = AudioTrainingConfig(phase=phase, epochs=epochs, loss=loss, latent_dim=latent_dim, name=name, timestring=timestring, renorm=renorm, last_activation=last_activation, batch_size=batch_size, data_steps=data_steps, dropout=dropout, learning_rate=learning_rate, commit_hash=commit_hash)
+    config = AudioTrainingConfig(phase=phase, epochs=epochs, loss=loss, latent_dim=latent_dim, name=name, timestring=timestring, renorm=renorm, last_activation=activation, batch_size=batch_size, data_steps=data_steps, dropout=dropout, learning_rate=learning_rate, commit_hash=commit_hash)
 
     def image_loss(y_true,y_pred):
         return tf.norm(y_true - y_pred)
@@ -143,7 +143,9 @@ def main():
     #train_dataset = tf.data.Dataset.zip((train_dataset, train_dataset))
     #test_dataset = tf.data.Dataset.zip((test_dataset, test_dataset))
 
-    model = CAE(latent_dim=latent_dim, renorm=renorm, last_activation=last_activation, dropout=dropout)
+    mean, var = get_normalization_stats(dataset_path, phase)
+
+    model = CAE(latent_dim=latent_dim, renorm=renorm, activation=activation, dropout=dropout, mean=mean, var=var)
     model.summary()
 
     model.compile(optimizer=tf.optimizers.Adam(learning_rate=learning_rate), loss=[loss], metrics=['mae', 'crossentropy'])
