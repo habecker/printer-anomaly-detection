@@ -76,6 +76,8 @@ def load_audio_dataset(print_dataset_path: Path, after: Datetime, before: Dateti
                 for i in range(0, audio_len, loader_step_size*sr):
                     tf_audio = tf.convert_to_tensor(audio[i:i+loader_step_size*sr], dtype=tf.float32)
                     result = sft(tf_audio, window_size)
+                    result = tf.math.log1p(result)
+                    result = result / tf.math.reduce_max(tf.abs(result))
             
                     for i in range(0, result.shape[0], step_size):
                         if result.shape[0] >= i + window_size:
