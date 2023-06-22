@@ -150,7 +150,7 @@ def main():
 
     lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
         initial_learning_rate=learning_rate,
-        decay_steps=532000./(data_steps*batch_size),
+        decay_steps=4.*532000./(data_steps*batch_size),
         decay_rate=0.9)
     optimizer = tf.keras.optimizers.SGD(learning_rate=lr_schedule)
     model.compile(optimizer=optimizer, loss=[loss], metrics=['mae', 'crossentropy'])
