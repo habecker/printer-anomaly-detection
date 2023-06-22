@@ -1,6 +1,7 @@
 import argparse
 from dataclasses import dataclass
 from pathlib import Path
+import subprocess
 
 import tensorflow as tf
 import yaml
@@ -24,10 +25,14 @@ class AudioTrainingConfig:
     data_steps: int
     dropout: float
     learning_rate: float
+    commit_hash: str
 
 def main():
     warnings.simplefilter(action='ignore', category=FutureWarning)
     warnings.simplefilter(action='ignore', category=UserWarning)
+
+    def get_git_revision_short_hash() -> str:
+        return subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('ascii').strip()
 
     parser = argparse.ArgumentParser(
         description="Preprocessing Script"
@@ -100,8 +105,10 @@ def main():
     timestring = datetime.now().isoformat(timespec='seconds')
 
     args = parser.parse_args()
+
+    commit_hash = get_git_revision_short_hash()
     
-    name = args.name
+    name = f'{args.name}-{commit_hash}'
     phase = args.phase
     latent_dim = args.latent_dim
     epochs = args.epochs
@@ -113,7 +120,7 @@ def main():
     dropout = args.dropout
     learning_rate = args.learning_rate
 
-    config = AudioTrainingConfig(phase=phase, epochs=epochs, loss=loss, latent_dim=latent_dim, name=name, timestring=timestring, renorm=renorm, last_activation=last_activation, batch_size=batch_size, data_steps=data_steps, dropout=dropout, learning_rate=learning_rate)
+    config = AudioTrainingConfig(phase=phase, epochs=epochs, loss=loss, latent_dim=latent_dim, name=name, timestring=timestring, renorm=renorm, last_activation=last_activation, batch_size=batch_size, data_steps=data_steps, dropout=dropout, learning_rate=learning_rate, commit_hash=commit_hash)
 
     def image_loss(y_true,y_pred):
         return tf.norm(y_true - y_pred)
