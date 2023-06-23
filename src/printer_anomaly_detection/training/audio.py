@@ -26,6 +26,7 @@ class AudioTrainingConfig:
     dropout: float
     learning_rate: float
     commit_hash: str
+    decay_factor: float
 
 def main():
     warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -102,6 +103,11 @@ def main():
         type=float,
         default=0.001,
     )
+    parser.add_argument(
+        "--decay_factor",
+        type=float,
+        default=2.,
+    )
     timestring = datetime.now().isoformat(timespec='seconds')
 
     args = parser.parse_args()
@@ -119,8 +125,9 @@ def main():
     data_steps = args.data_steps
     dropout = args.dropout
     learning_rate = args.learning_rate
+    decay_factor = args.decay_factor
 
-    config = AudioTrainingConfig(phase=phase, epochs=epochs, loss=loss, latent_dim=latent_dim, name=name, timestring=timestring, renorm=renorm, last_activation=activation, batch_size=batch_size, data_steps=data_steps, dropout=dropout, learning_rate=learning_rate, commit_hash=commit_hash)
+    config = AudioTrainingConfig(phase=phase, epochs=epochs, loss=loss, latent_dim=latent_dim, name=name, timestring=timestring, renorm=renorm, last_activation=activation, batch_size=batch_size, data_steps=data_steps, dropout=dropout, learning_rate=learning_rate, commit_hash=commit_hash, decay_factor=decay_factor)
 
     def image_loss(y_true,y_pred):
         return tf.norm(y_true - y_pred)
@@ -150,7 +157,7 @@ def main():
 
     lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
         initial_learning_rate=learning_rate,
-        decay_steps=2.*532000./(data_steps*batch_size),
+        decay_steps=decay_factor*532000./(data_steps*batch_size),
         decay_rate=0.9)
     optimizer = tf.keras.optimizers.SGD(learning_rate=lr_schedule)
     model.compile(optimizer=optimizer, loss=[loss], metrics=['mae', 'crossentropy'])
