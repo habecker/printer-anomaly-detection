@@ -83,7 +83,7 @@ def get_normalization_stats(print_dataset_path: Path, name: str) -> Tuple[float,
     return mean, var
 
 
-def load_audio_dataset(print_dataset_path: Path, name: str, after: Datetime, before: Datetime, window_size: int, step_size: int, loader_step_size: int = 120, sr: int = 22050, outcomes: Set[Outcome] = {Outcome.SUCCESS}) -> tf.data.Dataset:
+def load_audio_dataset(print_dataset_path: Path, name: str, after: Datetime, before: Datetime, window_size: int, step_size: int, loader_step_size: int = 120, sr: int = 22050, outcomes: Set[Outcome] = {Outcome.SUCCESS}, shuffle: bool = False) -> tf.data.Dataset:
     def generator():
         for audio_path in get_audio_dataset_files(print_dataset_path, after, before, outcomes):
             audio = load_audio_file(audio_path)
@@ -93,10 +93,10 @@ def load_audio_dataset(print_dataset_path: Path, name: str, after: Datetime, bef
                 result = sft(tf_audio, window_size)
                 #result = tf.math.log1p(result)
                 #result = result / tf.math.reduce_max(tf.abs(result))
-        
-                for i in range(0, result.shape[0], step_size):
-                    if result.shape[0] >= i + window_size:
-                        _sft = result[i:i+window_size]
+                indices = list(range(0, result.shape[0], step_size))        
+                for idx in np.random.shuffle(indices) if shuffle else indices:
+                    if result.shape[0] >= idx + window_size:
+                        _sft = result[idx:idx+window_size]
                         _sft = _sft[:window_size,:window_size]
                         yield tf.identity(_sft)
     return tf.data.Dataset.from_generator(generator, output_signature=(tf.TensorSpec(shape=(window_size, window_size), dtype=tf.float32)))

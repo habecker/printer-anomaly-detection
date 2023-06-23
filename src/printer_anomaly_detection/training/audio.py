@@ -27,6 +27,7 @@ class AudioTrainingConfig:
     learning_rate: float
     commit_hash: str
     decay_factor: float
+    shuffle_data: bool
 
 def main():
     warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -108,6 +109,11 @@ def main():
         type=float,
         default=2.,
     )
+    parser.add_argument(
+        "--shuffle_data",
+        action='store_true',
+        default=False
+    )
     timestring = datetime.now().isoformat(timespec='seconds')
 
     args = parser.parse_args()
@@ -126,8 +132,9 @@ def main():
     dropout = args.dropout
     learning_rate = args.learning_rate
     decay_factor = args.decay_factor
+    shuffle_data = args.shuffle_data
 
-    config = AudioTrainingConfig(phase=phase, epochs=epochs, loss=loss, latent_dim=latent_dim, name=name, timestring=timestring, renorm=renorm, last_activation=activation, batch_size=batch_size, data_steps=data_steps, dropout=dropout, learning_rate=learning_rate, commit_hash=commit_hash, decay_factor=decay_factor)
+    config = AudioTrainingConfig(phase=phase, epochs=epochs, loss=loss, latent_dim=latent_dim, name=name, timestring=timestring, renorm=renorm, last_activation=activation, batch_size=batch_size, data_steps=data_steps, dropout=dropout, learning_rate=learning_rate, commit_hash=commit_hash, decay_factor=decay_factor, shuffle_data=shuffle_data)
 
     def image_loss(y_true,y_pred):
         return tf.norm(y_true - y_pred)
@@ -142,7 +149,7 @@ def main():
 
     dataset_path = Path(args.dataset_folder)
 
-    train_dataset, test_dataset = load_audio_dataset_split(dataset_path, phase, Split.TRAIN, window_size=256, step_size=data_steps), \
+    train_dataset, test_dataset = load_audio_dataset_split(dataset_path, phase, Split.TRAIN, window_size=256, step_size=data_steps, shuffle_data=shuffle_data), \
                                   load_audio_dataset_split(dataset_path, phase, Split.TEST, window_size=256, step_size=data_steps)
 
     #assert len(list(train_dataset.take(1))) > 0, "No training data found"
