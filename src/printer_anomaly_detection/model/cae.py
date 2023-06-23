@@ -2,7 +2,7 @@ from typing import Tuple
 
 import tensorflow as tf
 
-def CAE(latent_dim: int = 256, input_shape: Tuple[int, int, int] = (256, 256, 1), activation='relu', renorm=False, dropout = 0.0, mean: float = None, var: float = None) -> tf.keras.Model:
+def CAE(latent_dim: int = 256, input_shape: Tuple[int, int, int] = (256, 256, 1), activation='relu', renorm=False, dropout = 0.0, mean: float = None, var: float = None, last_activation=None) -> tf.keras.Model:
     normalization = None
 
     if mean and var:
@@ -44,7 +44,6 @@ def CAE(latent_dim: int = 256, input_shape: Tuple[int, int, int] = (256, 256, 1)
              tf.keras.layers.Conv2DTranspose(filters=32, kernel_size=3, strides=2, padding='same', activation=activation),
              tf.keras.layers.BatchNormalization(renorm=renorm),
              tf.keras.layers.Conv2DTranspose(filters=1, kernel_size=3, strides=2, padding='same', activation=activation),
-      #       tf.keras.layers.Normalization(axis=(0, 1), mean=normalization.mean, variance=normalization.variance, invert=True),
          ]
 
     if normalization:

@@ -20,6 +20,7 @@ class AudioTrainingConfig:
     name: str
     timestring: str
     renorm: bool
+    activation: str
     last_activation: str
     batch_size: int
     data_steps: int
@@ -80,9 +81,14 @@ def main():
         default=False
     )
     parser.add_argument(
+        "--last_activation",
+        type=str,
+        default='tanh'
+    )
+    parser.add_argument(
         "--activation",
         type=str,
-        default='tanh',
+        default='relu',
     )
     parser.add_argument(
         "--batch_size",
@@ -127,6 +133,7 @@ def main():
     loss = args.loss
     renorm = args.renorm
     activation = args.activation
+    last_activation = args.last_activation
     batch_size = args.batch_size
     data_steps = args.data_steps
     dropout = args.dropout
@@ -134,7 +141,7 @@ def main():
     decay_factor = args.decay_factor
     shuffle_data = args.shuffle_data
 
-    config = AudioTrainingConfig(phase=phase, epochs=epochs, loss=loss, latent_dim=latent_dim, name=name, timestring=timestring, renorm=renorm, last_activation=activation, batch_size=batch_size, data_steps=data_steps, dropout=dropout, learning_rate=learning_rate, commit_hash=commit_hash, decay_factor=decay_factor, shuffle_data=shuffle_data)
+    config = AudioTrainingConfig(phase=phase, epochs=epochs, loss=loss, latent_dim=latent_dim, name=name, timestring=timestring, renorm=renorm, last_activation=last_activation, activation=activation, batch_size=batch_size, data_steps=data_steps, dropout=dropout, learning_rate=learning_rate, commit_hash=commit_hash, decay_factor=decay_factor, shuffle_data=shuffle_data)
 
     def image_loss(y_true,y_pred):
         return tf.norm(y_true - y_pred)
@@ -167,7 +174,7 @@ def main():
         decay_steps=decay_factor*532000./(data_steps*batch_size),
         decay_rate=0.9)
     optimizer = tf.keras.optimizers.SGD(learning_rate=lr_schedule)
-    model.compile(optimizer=optimizer, loss=[loss], metrics=['mae', 'crossentropy'])
+    model.compile(optimizer=optimizer, loss=[loss], metrics=['mae', 'mse', 'crossentropy', image_loss])
     #model.compile(optimizer=tf.optimizers.Adam(learning_rate=learning_rate), loss=[loss], metrics=['mae', 'crossentropy'])
 
     train_dataset = train_dataset.map(lambda x: (x, x)).batch(batch_size).prefetch(tf.data.AUTOTUNE)
