@@ -143,13 +143,17 @@ def main():
 
     config = AudioTrainingConfig(phase=phase, epochs=epochs, loss=loss, latent_dim=latent_dim, name=name, timestring=timestring, renorm=renorm, last_activation=last_activation, activation=activation, batch_size=batch_size, data_steps=data_steps, dropout=dropout, learning_rate=learning_rate, commit_hash=commit_hash, decay_factor=decay_factor, shuffle_data=shuffle_data)
 
-    def image_loss(y_true,y_pred):
-        return tf.norm(y_true - y_pred)
+    def l1norm(y_true,y_pred):
+        return tf.reduce_mean(tf.square(y_true - y_pred))
+
+    def l2norm(y_true,y_pred):
+        return tf.reduce_mean(tf.abs(y_true - y_pred))
 
     loss_mappings = {
         'kld': tf.keras.losses.KLDivergence(),
         'bce': tf.keras.losses.BinaryCrossentropy(),
-        'l2norm': image_loss
+        'l2norm': l2norm,
+        'l1norm': l1norm
     }
     
     loss = loss_mappings.get(loss, loss)
@@ -174,7 +178,7 @@ def main():
         decay_steps=decay_factor*532000./(data_steps*batch_size),
         decay_rate=0.9)
     optimizer = tf.keras.optimizers.SGD(learning_rate=lr_schedule)
-    model.compile(optimizer=optimizer, loss=[loss], metrics=['mae', 'mse', 'crossentropy', image_loss])
+    model.compile(optimizer=optimizer, loss=[loss], metrics=['mae', 'mse', 'crossentropy', l1norm, l2norm])
     #model.compile(optimizer=tf.optimizers.Adam(learning_rate=learning_rate), loss=[loss], metrics=['mae', 'crossentropy'])
 
     train_dataset = train_dataset.map(lambda x: (x, x)).batch(batch_size).prefetch(tf.data.AUTOTUNE)
