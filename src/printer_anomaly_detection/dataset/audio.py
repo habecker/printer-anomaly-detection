@@ -94,7 +94,9 @@ def load_audio_dataset(print_dataset_path: Path, name: str, after: Datetime, bef
                 #result = tf.math.log1p(result)
                 #result = result / tf.math.reduce_max(tf.abs(result))
                 indices = list(range(0, result.shape[0], step_size))        
-                for idx in np.random.shuffle(indices) if shuffle else indices:
+                if shuffle:
+                    np.random.shuffle(indices)
+                for idx in indices:
                     if result.shape[0] >= idx + window_size:
                         _sft = result[idx:idx+window_size]
                         _sft = _sft[:window_size,:window_size]
@@ -103,14 +105,14 @@ def load_audio_dataset(print_dataset_path: Path, name: str, after: Datetime, bef
 
 Split = Enum('Split', ['TRAIN', 'VALIDATION', 'TEST'])
 
-def load_audio_dataset_split(print_dataset_path: Path, name: str, split: Split, window_size: int, step_size: int, outcomes: Set[Outcome] = {Outcome.SUCCESS}) -> tf.data.Dataset:
+def load_audio_dataset_split(print_dataset_path: Path, name: str, split: Split, window_size: int, step_size: int, outcomes: Set[Outcome] = {Outcome.SUCCESS}, shuffle_data: bool = False) -> tf.data.Dataset:
     with open(print_dataset_path / 'datasets.csv') as f:
         for row in csv.DictReader(f):
             if row['name'] != name or row['split'] != split.name.lower():
                 continue
             after = Datetime(row['after'])
             before = Datetime(row['before'])
-            return load_audio_dataset(print_dataset_path=print_dataset_path, name=name, after=after, before=before, window_size=window_size, step_size=step_size, outcomes = outcomes)
+            return load_audio_dataset(print_dataset_path=print_dataset_path, name=name, after=after, before=before, window_size=window_size, step_size=step_size, outcomes = outcomes, shuffle=shuffle_data)
 
 @dataclass
 class Upgrade:
