@@ -1,0 +1,14 @@
+!!python/object:printer_anomaly_detection.training.audio.AudioTrainingConfig
+batch_size: 1
+commit_hash: 58fe5f6
+data_steps: 8
+dropout: 0.0
+epochs: 250
+last_activation: relu
+latent_dim: 2048
+learning_rate: 0.01
+loss: bce
+name: test-58fe5f6
+phase: original
+renorm: false
+timestring: '2023-06-22T20:47:38'

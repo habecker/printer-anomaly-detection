@@ -1,0 +1,17 @@
+!!python/object:printer_anomaly_detection.training.audio.AudioTrainingConfig
+activation: relu
+batch_size: 8
+commit_hash: 7cd1d63
+data_steps: 8
+decay_factor: 3.0
+dropout: 0.0
+epochs: 250
+last_activation: tanh
+latent_dim: 256
+learning_rate: 0.02
+loss: l2norm
+name: exhaust_test-7cd1d63
+phase: original
+renorm: false
+shuffle_data: true
+timestring: '2023-06-23T16:47:45'

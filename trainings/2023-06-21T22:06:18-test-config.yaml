@@ -1,0 +1,12 @@
+!!python/object:printer_anomaly_detection.training.audio.AudioTrainingConfig
+batch_size: 4
+data_steps: 16
+dropout: 0.25
+epochs: 250
+last_activation: relu
+latent_dim: 512
+loss: bce
+name: test
+phase: exhaust
+renorm: false
+timestring: '2023-06-21T22:06:18'

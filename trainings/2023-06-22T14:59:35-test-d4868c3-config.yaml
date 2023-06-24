@@ -1,0 +1,14 @@
+!!python/object:printer_anomaly_detection.training.audio.AudioTrainingConfig
+batch_size: 1
+commit_hash: d4868c3
+data_steps: 128
+dropout: 0.6
+epochs: 250
+last_activation: tanh
+latent_dim: 64
+learning_rate: 0.0005
+loss: mae
+name: test-d4868c3
+phase: original
+renorm: false
+timestring: '2023-06-22T14:59:35'

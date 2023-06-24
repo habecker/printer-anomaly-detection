@@ -9,5 +9,4 @@ data/*/
 **/*.py[cod]
 
 checkpoints/
-trainings/
 logs/
