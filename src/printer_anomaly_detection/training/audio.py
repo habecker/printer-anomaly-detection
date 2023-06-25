@@ -30,6 +30,7 @@ class AudioTrainingConfig:
     decay_factor: float
     shuffle_data: bool
     disable_normalization: bool
+    scale: bool
 
 def main():
     warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -78,6 +79,11 @@ def main():
     )
     parser.add_argument(
         "--renorm",
+        action='store_true',
+        default=False
+    )
+    parser.add_argument(
+        "--scale",
         action='store_true',
         default=False
     )
@@ -147,8 +153,11 @@ def main():
     decay_factor = args.decay_factor
     shuffle_data = args.shuffle_data
     disable_normalization = args.disable_normalization
+    scale = args.scale
 
-    config = AudioTrainingConfig(phase=phase, epochs=epochs, loss=loss, latent_dim=latent_dim, name=name, timestring=timestring, renorm=renorm, last_activation=last_activation, activation=activation, batch_size=batch_size, data_steps=data_steps, dropout=dropout, learning_rate=learning_rate, commit_hash=commit_hash, decay_factor=decay_factor, shuffle_data=shuffle_data, disable_normalization=disable_normalization)
+    assert not scale or disable_normalization, "Cannot scale and normalize at the same time"
+
+    config = AudioTrainingConfig(phase=phase, epochs=epochs, loss=loss, latent_dim=latent_dim, name=name, timestring=timestring, renorm=renorm, last_activation=last_activation, activation=activation, batch_size=batch_size, data_steps=data_steps, dropout=dropout, learning_rate=learning_rate, commit_hash=commit_hash, decay_factor=decay_factor, shuffle_data=shuffle_data, disable_normalization=disable_normalization, scale=scale)
 
     def l1norm(y_true,y_pred):
         return tf.reduce_mean(tf.square(y_true - y_pred))
@@ -167,8 +176,8 @@ def main():
 
     dataset_path = Path(args.dataset_folder)
 
-    train_dataset, test_dataset = load_audio_dataset_split(dataset_path, phase, Split.TRAIN, window_size=256, step_size=data_steps, shuffle_data=shuffle_data), \
-                                  load_audio_dataset_split(dataset_path, phase, Split.TEST, window_size=256, step_size=data_steps)
+    train_dataset, test_dataset = load_audio_dataset_split(dataset_path, phase, Split.TRAIN, window_size=256, step_size=data_steps, shuffle_data=shuffle_data, scale=scale), \
+                                  load_audio_dataset_split(dataset_path, phase, Split.TEST, window_size=256, step_size=data_steps, scale=scale)
 
     #assert len(list(train_dataset.take(1))) > 0, "No training data found"
 
@@ -177,12 +186,15 @@ def main():
 
     mean, var = get_normalization_stats(dataset_path, phase) if not disable_normalization else (None, None)
 
-    model = CAE(latent_dim=latent_dim, renorm=renorm, activation=activation, dropout=dropout, mean=mean, var=var)
+    model = CAE(latent_dim=latent_dim, renorm=renorm, activation=activation, dropout=dropout, mean=mean, var=var, last_activation=last_activation)
     model.summary()
+
+    dataset_len = 34967.6
+    decay_base = (532000./3164.8) * dataset_len
 
     lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
         initial_learning_rate=learning_rate,
-        decay_steps=decay_factor*532000./(data_steps*batch_size),
+        decay_steps=decay_factor*decay_base/(data_steps*batch_size),
         decay_rate=0.9)
     optimizer = tf.keras.optimizers.SGD(learning_rate=lr_schedule)
     model.compile(optimizer=optimizer, loss=[loss], metrics=['mae', 'mse', 'crossentropy', l1norm, l2norm])
