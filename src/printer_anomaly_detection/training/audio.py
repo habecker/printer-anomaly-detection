@@ -29,6 +29,7 @@ class AudioTrainingConfig:
     commit_hash: str
     decay_factor: float
     shuffle_data: bool
+    disable_normalization: bool
 
 def main():
     warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -77,6 +78,11 @@ def main():
     )
     parser.add_argument(
         "--renorm",
+        action='store_true',
+        default=False
+    )
+    parser.add_argument(
+        "--disable_normalization",
         action='store_true',
         default=False
     )
@@ -140,8 +146,9 @@ def main():
     learning_rate = args.learning_rate
     decay_factor = args.decay_factor
     shuffle_data = args.shuffle_data
+    disable_normalization = args.disable_normalization
 
-    config = AudioTrainingConfig(phase=phase, epochs=epochs, loss=loss, latent_dim=latent_dim, name=name, timestring=timestring, renorm=renorm, last_activation=last_activation, activation=activation, batch_size=batch_size, data_steps=data_steps, dropout=dropout, learning_rate=learning_rate, commit_hash=commit_hash, decay_factor=decay_factor, shuffle_data=shuffle_data)
+    config = AudioTrainingConfig(phase=phase, epochs=epochs, loss=loss, latent_dim=latent_dim, name=name, timestring=timestring, renorm=renorm, last_activation=last_activation, activation=activation, batch_size=batch_size, data_steps=data_steps, dropout=dropout, learning_rate=learning_rate, commit_hash=commit_hash, decay_factor=decay_factor, shuffle_data=shuffle_data, disable_normalization=disable_normalization)
 
     def l1norm(y_true,y_pred):
         return tf.reduce_mean(tf.square(y_true - y_pred))
@@ -168,7 +175,7 @@ def main():
     #train_dataset = tf.data.Dataset.zip((train_dataset, train_dataset))
     #test_dataset = tf.data.Dataset.zip((test_dataset, test_dataset))
 
-    mean, var = get_normalization_stats(dataset_path, phase)
+    mean, var = get_normalization_stats(dataset_path, phase) if not disable_normalization else (None, None)
 
     model = CAE(latent_dim=latent_dim, renorm=renorm, activation=activation, dropout=dropout, mean=mean, var=var)
     model.summary()

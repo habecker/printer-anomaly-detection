@@ -93,7 +93,7 @@ def load_audio_dataset(print_dataset_path: Path, name: str, after: Datetime, bef
                 result = sft(tf_audio, window_size)
                 #result = tf.math.log1p(result)
                 #result = result / tf.math.reduce_max(tf.abs(result))
-                indices = list(range(0, result.shape[0], step_size))        
+                indices = list(range(0, result.shape[0], step_size))
                 if shuffle:
                     np.random.shuffle(indices)
                 for idx in indices:
