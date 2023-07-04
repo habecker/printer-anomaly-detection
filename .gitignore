@@ -10,3 +10,5 @@ data/*/
 
 checkpoints/
 logs/
+
+.ipynb_checkpoints
