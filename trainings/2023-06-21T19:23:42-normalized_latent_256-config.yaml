@@ -1,7 +1,0 @@
-!!python/object:printer_anomaly_detection.training.audio.AudioTrainingConfig
-epochs: 5
-latent_dim: 256
-loss: kld
-name: normalized_latent_256
-phase: original
-timestring: '2023-06-21T19:23:42'

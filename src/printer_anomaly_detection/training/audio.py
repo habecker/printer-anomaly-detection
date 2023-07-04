@@ -189,7 +189,7 @@ def main():
     model = CAE(latent_dim=latent_dim, renorm=renorm, activation=activation, dropout=dropout, mean=mean, var=var, last_activation=last_activation)
     model.summary()
 
-    dataset_len = 34967.6
+    dataset_len = 3164.8 #34967.6
     decay_base = (532000./3164.8) * dataset_len
 
     lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
